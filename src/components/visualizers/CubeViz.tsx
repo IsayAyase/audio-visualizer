@@ -161,8 +161,8 @@ const CubeViz: React.FC<CubeVizProps> = ({
   }, [audioBands, rotationSpeed, enableRotate, enableShake, shakeIntensity]);
 
   return (
-    <div className="w-full h-screen flex items-center justify-center overflow-hidden">
-      <div className="w-56 h-56 hidden md:flex items-center justify-center">
+    <div className="w-full h-dvh flex items-center justify-center overflow-hidden">
+      <div className="w-56 h-56 flex items-center justify-center">
         <div ref={cubeWrapperRef} className="shrink-0 w-32 h-32 p-0" style={{ perspective: "1000px" }}>
           <div
             ref={cubeRef}
