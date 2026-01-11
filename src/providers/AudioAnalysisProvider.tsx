@@ -1,4 +1,4 @@
-import { BANDS, getBandEnergy } from "@/lib/band";
+import { createFrequencyBands, getBandEnergy } from "@/lib/band";
 import { useAudioCaptureStore } from "@/store/audioCapture";
 import { createContext, useContext, useEffect, useRef } from "react";
 
@@ -31,6 +31,8 @@ export function AudioAnalysisProvider({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
+  const BANDS = createFrequencyBands(noOfBands, 20, 14000);
+
   useEffect(() => {
     if (!mediaStream) return;
 
@@ -57,6 +59,8 @@ export function AudioAnalysisProvider({
 
   useEffect(() => {
     if (!mediaStream) {
+      // reset bands
+      bandsRef.current = new Float32Array(noOfBands);
       return;
     }
     if (!analyserRef.current || !dataArrayRef.current || !audioCtxRef.current)

@@ -1,6 +1,18 @@
 import { ThemeToggleBtn } from "@/providers/ThemeProvider";
+import { useAppStore } from "@/store/appStore";
 import { useAudioCaptureStore } from "@/store/audioCapture";
 import CaptureAudioBtn from "./CaptureAudioBtn";
+import { Button } from "./ui/button";
+
+const VisualizerSwitcher = () => {
+  const { setCurrVisualizer, currVisualizer } = useAppStore();
+  const handleClick = () => {
+    const nextVisualizer =
+      currVisualizer === "InfinitySquares" ? "Cube" : "InfinitySquares";
+    setCurrVisualizer(nextVisualizer);
+  };
+  return <Button onClick={handleClick}>Switch Visualizer</Button>;
+};
 
 const ControlBar = () => {
   const { isCapturing } = useAudioCaptureStore();
@@ -13,7 +25,10 @@ const ControlBar = () => {
             {isCapturing ? "Capturing Audio" : "Not Capturing Audio"}
           </span>
         </div>
-        <ThemeToggleBtn />
+        <div className="flex items-center gap-2">
+          <VisualizerSwitcher />
+          <ThemeToggleBtn />
+        </div>
       </div>
     </div>
   );
