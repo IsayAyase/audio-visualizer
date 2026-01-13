@@ -32,6 +32,9 @@ export function AudioAnalysisProvider({
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
   const BANDS = createFrequencyBands(noOfBands, 20, 14000);
+  // console.log(BANDS);
+  // console.log(bandsRef, "bandsRef");
+  
 
   useEffect(() => {
     if (!mediaStream) return;

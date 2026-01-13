@@ -5,7 +5,7 @@ const CaptureAudioBtn = () => {
   const { startCapture, isCapturing, cleanup } = useAudioCaptureStore();
   const handleToggleBtn = () => (isCapturing ? cleanup() : startCapture());
   return (
-    <Button onClick={handleToggleBtn}>
+    <Button variant="outline" className="gap-2" onClick={handleToggleBtn}>
       {isCapturing ? "Stop" : "Capture"}
     </Button>
   );

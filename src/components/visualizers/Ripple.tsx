@@ -1,0 +1,164 @@
+import React, { useEffect, useRef } from "react";
+
+interface RippleProps {
+  audioBands?: React.MutableRefObject<Float32Array>;
+  enableRipple?: boolean;
+  enableStrobe?: boolean;
+  enableShake?: boolean;
+  shakeIntensity?: number;
+  strobeIntensity?: number;
+  rippleSpeed?: number;
+  kickThreshold?: number;
+  kickCooldown?: number;
+}
+
+const colors = [
+  { main: "#e63946", glow: "#e63946aa" },
+  { main: "#2a9d8f", glow: "#2a9d8faa" },
+  { main: "#e9c46a", glow: "#e9c46aaa" },
+  { main: "#8ab17d", glow: "#8ab17daa" },
+  { main: "#f4a261", glow: "#f4a261aa" },
+  { main: "#9b5de5", glow: "#9b5de5aa" },
+];
+
+const Ripple: React.FC<RippleProps> = ({
+  audioBands,
+  enableRipple = true,
+  enableStrobe = true,
+  enableShake = true,
+  shakeIntensity = 10,
+  strobeIntensity = 0.6,
+  rippleSpeed = 1.5,
+  kickThreshold = 0.6,
+  kickCooldown = 80,
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>(0);
+  const ripplesRef = useRef<{ radius: number; color: string; alpha: number; maxRadius: number }[]>([]);
+  const lastKickTimeRef = useRef(0);
+  const currentColorIndexRef = useRef(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    const resizeCanvas = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    const maxDiagonal = Math.sqrt(width * width + height * height);
+
+    const triggerKick = () => {
+      const colorIndex = Math.floor(Math.random() * colors.length);
+      currentColorIndexRef.current = colorIndex;
+
+      ripplesRef.current.push({
+        radius: 0,
+        color: colors[colorIndex].main,
+        alpha: 1,
+        maxRadius: maxDiagonal * 0.8,
+      });
+    };
+
+    const animate = () => {
+      let subBassLevel = 0;
+      let kickLevel = 0;
+      if (audioBands?.current && audioBands.current.length >= 40) {
+        for (let i = 0; i < 7; i++) {
+          subBassLevel += audioBands.current[i];
+        }
+        subBassLevel /= 7;
+
+        for (let i = 2; i < 9; i++) {
+          kickLevel += audioBands.current[i];
+        }
+        kickLevel /= 7;
+      }
+
+      const now = Date.now();
+      const isKick = kickLevel > kickThreshold;
+      const withinCooldown = now - lastKickTimeRef.current <= kickCooldown;
+
+      if (isKick && !withinCooldown) {
+        if (enableRipple) {
+          triggerKick();
+        }
+        lastKickTimeRef.current = now;
+      }
+
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, width, height);
+
+      let shakeX = 0;
+      let shakeY = 0;
+      if (enableShake) {
+        shakeX = (Math.random() - 0.5) * kickLevel * shakeIntensity;
+        shakeY = (Math.random() - 0.5) * kickLevel * shakeIntensity;
+      }
+
+      const centerX = width / 2 + shakeX;
+      const centerY = height / 2 + shakeY;
+
+      ripplesRef.current = ripplesRef.current.filter((ripple) => {
+        ripple.radius += 15 * rippleSpeed + kickLevel * 20 * rippleSpeed;
+        ripple.alpha = Math.max(0, 1 - (ripple.radius / ripple.maxRadius) * 1.2);
+        ripple.alpha *= 0.98;
+
+        if (ripple.alpha <= 0.01) return false;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, ripple.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = ripple.color;
+        ctx.lineWidth = 80 * ripple.alpha;
+        ctx.globalAlpha = ripple.alpha;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, ripple.radius * 0.7, 0, Math.PI * 2);
+        ctx.strokeStyle = ripple.color;
+        ctx.lineWidth = 40 * ripple.alpha;
+        ctx.globalAlpha = ripple.alpha * 0.5;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        return true;
+      });
+
+      if (enableStrobe && subBassLevel > 0.5) {
+        const strobeColor = colors[currentColorIndexRef.current].main;
+        ctx.fillStyle = strobeColor;
+        ctx.globalAlpha = subBassLevel * strobeIntensity;
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalAlpha = 1;
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [audioBands, enableRipple, enableStrobe, enableShake, shakeIntensity, strobeIntensity, rippleSpeed, kickThreshold, kickCooldown]);
+
+  return <canvas ref={canvasRef} className="w-full h-full block" />;
+};
+
+export default Ripple;

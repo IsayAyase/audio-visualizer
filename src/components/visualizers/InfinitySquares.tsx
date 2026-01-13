@@ -23,6 +23,8 @@ const InfinitySquares: React.FC<InfinitySquaresProps> = ({
   const centerOffsetRef = useRef({ x: 0, y: 0 });
   const targetCenterOffsetRef = useRef({ x: 0, y: 0 });
   const lastKickTimeRef = useRef(0);
+  const prevBassLevelRef = useRef(0);
+  const kickCooldown = 80;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,16 +65,20 @@ const InfinitySquares: React.FC<InfinitySquaresProps> = ({
       const targetSpeed = baseSpeedRef.current * (1 + bassLevel * 5);
       currentSpeedRef.current += (targetSpeed - currentSpeedRef.current) * 0.1;
 
-      if (bassLevel > 0.6) {
-        const now = Date.now();
-        if (now - lastKickTimeRef.current > 150) {
-          targetCenterOffsetRef.current = {
-            x: (Math.random() - 0.5) * 180,
-            y: (Math.random() - 0.5) * 180,
-          };
-          lastKickTimeRef.current = now;
-        }
+      const now = Date.now();
+      const delta = bassLevel - prevBassLevelRef.current;
+      const isKick = bassLevel > 0.6 && delta > 0.05 && prevBassLevelRef.current < 0.6;
+      const withinCooldown = now - lastKickTimeRef.current <= kickCooldown;
+
+      if (isKick && !withinCooldown) {
+        targetCenterOffsetRef.current = {
+          x: (Math.random() - 0.5) * 180,
+          y: (Math.random() - 0.5) * 180,
+        };
+        lastKickTimeRef.current = now;
       }
+
+      prevBassLevelRef.current = bassLevel;
 
       centerOffsetRef.current.x += (targetCenterOffsetRef.current.x - centerOffsetRef.current.x) * 0.05;
       centerOffsetRef.current.y += (targetCenterOffsetRef.current.y - centerOffsetRef.current.y) * 0.05;

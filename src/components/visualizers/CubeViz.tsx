@@ -29,9 +29,11 @@ const CubeViz: React.FC<CubeVizProps> = ({
   const cubeRef = useRef<HTMLDivElement>(null);
   const faceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const animationRef = useRef<number>(0);
-  const translateZStateRef = useRef({ z: 64 });
+  const translateZStateRef = useRef({ z: 112 });
   const lastKickTimeRef = useRef(0);
-  const coloredFacesRef = useRef<Set<number>>(new Set());
+  const lastFaceIndexRef = useRef(-1);
+  const kickThreshold = 0.6;
+  const kickCooldown = 0;
 
   useEffect(() => {
     if (cubeRef.current && enableRotate) {
@@ -68,64 +70,48 @@ const CubeViz: React.FC<CubeVizProps> = ({
       });
     };
 
-    const triggerKickEffect = () => {
+    const triggerKickEffect = (faceIndex: number) => {
       const colorIndex = Math.floor(Math.random() * colors.length);
+      const face = faceRefs.current[faceIndex];
 
-      const whiteFaces: number[] = [];
-      for (let i = 0; i < 6; i++) {
-        if (!coloredFacesRef.current.has(i)) {
-          whiteFaces.push(i);
-        }
+      if (face) {
+        gsap.to(face, {
+          backgroundColor: colors[colorIndex].main,
+          boxShadow: `inset 0 0 30px ${colors[colorIndex].glow}80, 0 0 20px ${colors[colorIndex].glow}40`,
+          borderColor: colors[colorIndex].glow,
+          duration: 0.1,
+          ease: "power2.out",
+          onComplete: () => {
+            setTimeout(() => {
+              gsap.to(face, {
+                backgroundColor: "var(--secondary)",
+                boxShadow: "none",
+                borderColor: "var(--border)",
+                duration: 0.3,
+                ease: "power2.out",
+              });
+            }, 800);
+          },
+        });
       }
-
-      if (whiteFaces.length === 0) {
-        coloredFacesRef.current.clear();
-        whiteFaces.push(0, 1, 2, 3, 4, 5);
-      }
-
-      const faceIndex =
-        whiteFaces[Math.floor(Math.random() * whiteFaces.length)];
-      coloredFacesRef.current.add(faceIndex);
-
-      colors.forEach((_, i) => {
-        const face = faceRefs.current[i];
-        if (face) {
-          if (i === faceIndex) {
-            gsap.to(face, {
-              backgroundColor: colors[colorIndex].main,
-              boxShadow: `inset 0 0 30px ${colors[colorIndex].glow}80, 0 0 20px ${colors[colorIndex].glow}40`,
-              borderColor: colors[colorIndex].glow,
-              duration: 0.1,
-              ease: "power2.out",
-              onComplete: () => {
-                setTimeout(() => {
-                  coloredFacesRef.current.delete(i);
-                  gsap.to(face, {
-                    backgroundColor: "var(--secondary)",
-                    boxShadow: "none",
-                    borderColor: "var(--border)",
-                    duration: 0.3,
-                    ease: "power2.out",
-                  });
-                }, 800);
-              },
-            });
-          }
-        }
-      });
     };
 
     const animate = () => {
       let bassLevel = 0;
+      let kickLevel = 0;
       if (audioBands?.current && audioBands.current.length >= 40) {
-        bassLevel =
-          (audioBands.current[0] +
-            audioBands.current[1] +
-            audioBands.current[2]) /
-          3;
+        for (let i = 0; i < 7; i++) {
+          bassLevel += audioBands.current[i];
+        }
+        bassLevel /= 7;
+
+        for (let i = 2; i < 9; i++) {
+          kickLevel += audioBands.current[i];
+        }
+        kickLevel /= 7;
       }
 
-      const targetTranslateZ = 64 + bassLevel * 80;
+      const targetTranslateZ = 112 + bassLevel * 80;
 
       gsap.to(translateZStateRef.current, {
         z: targetTranslateZ,
@@ -140,12 +126,18 @@ const CubeViz: React.FC<CubeVizProps> = ({
         cubeWrapperRef.current.style.transform = `translate(${shakeX}px, ${shakeY}px)`;
       }
 
-      if (bassLevel > 0.6) {
-        const now = Date.now();
-        if (now - lastKickTimeRef.current > 150) {
-          triggerKickEffect();
-          lastKickTimeRef.current = now;
+      const now = Date.now();
+      const isKick = kickLevel > kickThreshold;
+      const withinCooldown = kickCooldown > 0 && now - lastKickTimeRef.current <= kickCooldown;
+
+      if (isKick && !withinCooldown) {
+        let faceIndex = Math.floor(Math.random() * 6);
+        while (faceIndex === lastFaceIndexRef.current) {
+          faceIndex = Math.floor(Math.random() * 6);
         }
+        triggerKickEffect(faceIndex);
+        lastFaceIndexRef.current = faceIndex;
+        lastKickTimeRef.current = now;
       }
 
       animationRef.current = requestAnimationFrame(animate);
@@ -162,8 +154,8 @@ const CubeViz: React.FC<CubeVizProps> = ({
 
   return (
     <div className="w-full h-dvh flex items-center justify-center overflow-hidden">
-      <div className="w-56 h-56 flex items-center justify-center">
-        <div ref={cubeWrapperRef} className="shrink-0 w-32 h-32 p-0" style={{ perspective: "1000px" }}>
+      <div className="w-72 h-72 flex items-center justify-center">
+        <div ref={cubeWrapperRef} className="shrink-0 w-56 h-56 p-0" style={{ perspective: "1000px" }}>
           <div
             ref={cubeRef}
             className="relative w-full h-full"
@@ -175,16 +167,16 @@ const CubeViz: React.FC<CubeVizProps> = ({
                 ref={(el) => {
                   faceRefs.current[index] = el;
                 }}
-                className="absolute w-full h-full bg-secondary"
+                className="absolute w-full h-full bg-secondary rounded-lg"
                 style={{
                   opacity: 0.7,
                   transform: [
-                    `translateZ(64px)`,
-                    `rotateY(90deg) translateZ(64px)`,
-                    `rotateY(-90deg) translateZ(64px)`,
-                    `rotateX(90deg) translateZ(64px)`,
-                    `rotateX(-90deg) translateZ(64px)`,
-                    `translateZ(-64px) rotateY(180deg)`,
+                    `translateZ(112px)`,
+                    `rotateY(90deg) translateZ(112px)`,
+                    `rotateY(-90deg) translateZ(112px)`,
+                    `rotateX(90deg) translateZ(112px)`,
+                    `rotateX(-90deg) translateZ(112px)`,
+                    `translateZ(-112px) rotateY(180deg)`,
                   ][index],
                   border: "3px solid var(--border)",
                   transition: "box-shadow 0.3s ease",
