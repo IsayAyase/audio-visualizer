@@ -1,4 +1,5 @@
 import CubeViz from "@/components/visualizers/CubeViz";
+import ImageBoom from "@/components/visualizers/ImageBoom";
 import InfinitySquares from "@/components/visualizers/InfinitySquares";
 import Ripple from "@/components/visualizers/Ripple";
 import { useAudioAnalysis } from "@/providers/AudioAnalysisProvider";
@@ -20,8 +21,9 @@ function VisualizerPage() {
       {currVisualizer === "CubeViz" && (
         <CubeViz audioBands={bandsRef} rotationSpeed={40} shakeIntensity={6} />
       )}
-      {currVisualizer === "Ripple" && (
-        <Ripple audioBands={bandsRef} />
+      {currVisualizer === "Ripple" && <Ripple audioBands={bandsRef} />}
+      {currVisualizer === "ImageBoom" && (
+        <ImageBoom audioBands={bandsRef} />
       )}
     </motion.div>
   );

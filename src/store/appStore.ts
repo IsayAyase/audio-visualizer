@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type VisualizerType = "InfinitySquares" | "CubeViz" | "Ripple";
+type VisualizerType = "InfinitySquares" | "CubeViz" | "Ripple" | "ImageBoom";
 
 interface AudioCaptureStore {
     visualizersWithLabel: {
@@ -13,6 +13,7 @@ interface AudioCaptureStore {
 }
 
 const visualizers = {
+    ImageBoom: "Image Boom",
     CubeViz: "3D Cube",
     Ripple: "Beat Ripple",
     InfinitySquares: "Infinity Squares",
@@ -21,6 +22,6 @@ const visualizers = {
 export const useAppStore = create<AudioCaptureStore>((set) => ({
     visualizersNameObj: visualizers,
     visualizersWithLabel: Object.entries(visualizers).map(([type, label]) => ({ label: label, type: type as VisualizerType })),
-    currVisualizer: "CubeViz",
+    currVisualizer: "ImageBoom",
     setCurrVisualizer: (visualizer: VisualizerType) => set({ currVisualizer: visualizer }),
 }));

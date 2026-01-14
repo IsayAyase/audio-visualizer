@@ -81,10 +81,10 @@ const Ripple: React.FC<RippleProps> = ({
         }
         subBassLevel /= 7;
 
-        for (let i = 2; i < 9; i++) {
+        for (let i = 4; i < 9; i++) {
           kickLevel += audioBands.current[i];
         }
-        kickLevel /= 7;
+        kickLevel /= 5;
       }
 
       const now = Date.now();
