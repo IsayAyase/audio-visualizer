@@ -1,3 +1,4 @@
+import Confetti from "@/components/visualizers/Confetti";
 import CubeViz from "@/components/visualizers/CubeViz";
 import ImageBoom from "@/components/visualizers/ImageBoom";
 import InfinitySquares from "@/components/visualizers/InfinitySquares";
@@ -22,9 +23,8 @@ function VisualizerPage() {
         <CubeViz audioBands={bandsRef} rotationSpeed={40} shakeIntensity={6} />
       )}
       {currVisualizer === "Ripple" && <Ripple audioBands={bandsRef} />}
-      {currVisualizer === "ImageBoom" && (
-        <ImageBoom audioBands={bandsRef} />
-      )}
+      {currVisualizer === "ImageBoom" && <ImageBoom audioBands={bandsRef} />}
+      {currVisualizer === "Confetti" && <Confetti audioBands={bandsRef} />}
     </motion.div>
   );
 }
