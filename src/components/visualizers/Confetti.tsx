@@ -124,7 +124,7 @@ const Confetti: React.FC<ConfettiProps> = ({ audioBands }) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const isBassActive = bassLevel > bassThreshold;
-      const speedMult = isBassActive ? bassLevel : 0;
+      // const speedMult = isBassActive ? bassLevel : 0;
 
       currentSplitRef.current = bassLevel * maxSplit;
       const now = Date.now();

@@ -1,11 +1,15 @@
-import Confetti from "@/components/visualizers/Confetti";
-import CubeViz from "@/components/visualizers/CubeViz";
-import ImageBoom from "@/components/visualizers/ImageBoom";
-import InfinitySquares from "@/components/visualizers/InfinitySquares";
-import Ripple from "@/components/visualizers/Ripple";
 import { useAudioAnalysis } from "@/providers/AudioAnalysisProvider";
 import { useAppStore } from "@/store/appStore";
 import { motion } from "framer-motion";
+import { lazy, Suspense } from "react";
+
+const Confetti = lazy(() => import("@/components/visualizers/Confetti"));
+const CubeViz = lazy(() => import("@/components/visualizers/CubeViz"));
+const ImageBoom = lazy(() => import("@/components/visualizers/ImageBoom"));
+const InfinitySquares = lazy(
+  () => import("@/components/visualizers/InfinitySquares")
+);
+const Ripple = lazy(() => import("@/components/visualizers/Ripple"));
 
 function VisualizerPage() {
   const { bandsRef } = useAudioAnalysis();
@@ -16,15 +20,21 @@ function VisualizerPage() {
 
   return (
     <motion.div className="w-dvw h-full">
-      {currVisualizer === "InfinitySquares" && (
-        <InfinitySquares audioBands={bandsRef} />
-      )}
-      {currVisualizer === "CubeViz" && (
-        <CubeViz audioBands={bandsRef} rotationSpeed={40} shakeIntensity={6} />
-      )}
-      {currVisualizer === "Ripple" && <Ripple audioBands={bandsRef} />}
-      {currVisualizer === "ImageBoom" && <ImageBoom audioBands={bandsRef} />}
-      {currVisualizer === "Confetti" && <Confetti audioBands={bandsRef} />}
+      <Suspense fallback={<div>Loading...</div>}>
+        {currVisualizer === "InfinitySquares" && (
+          <InfinitySquares audioBands={bandsRef} />
+        )}
+        {currVisualizer === "CubeViz" && (
+          <CubeViz
+            audioBands={bandsRef}
+            rotationSpeed={40}
+            shakeIntensity={6}
+          />
+        )}
+        {currVisualizer === "Ripple" && <Ripple audioBands={bandsRef} />}
+        {currVisualizer === "ImageBoom" && <ImageBoom audioBands={bandsRef} />}
+        {currVisualizer === "Confetti" && <Confetti audioBands={bandsRef} />}
+      </Suspense>
     </motion.div>
   );
 }
